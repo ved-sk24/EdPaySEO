@@ -13,6 +13,7 @@ import instagram from './distributors/instagram.js'
 import facebook from './distributors/facebook.js'
 import whatsapp from './distributors/whatsapp.js'
 import wordpress from './distributors/wordpress.js'
+import youtube from './distributors/youtube.js'
 
 // ─── CLI Args ───────────────────────────────────────────
 const args = process.argv.slice(2)
@@ -334,6 +335,18 @@ async function distributeSocialPosts(posts, blogUrl) {
     }
   }
 
+  // YouTube Shorts (save scripts for now — needs video generation API for full automation)
+  if (youtube.isConfigured() && posts.youtubeShorts?.scripts?.length) {
+    for (const script of posts.youtubeShorts.scripts) {
+      results.youtube = await youtube.postShort({
+        script: script.script,
+        title: script.title,
+        description: script.description,
+        tags: script.tags,
+      })
+    }
+  }
+
   return results
 }
 
@@ -344,6 +357,7 @@ function getActivePlatforms() {
   if (instagram.isConfigured()) platforms.push('instagram')
   if (facebook.isConfigured()) platforms.push('facebook')
   if (whatsapp.isConfigured()) platforms.push('whatsapp')
+  if (youtube.isConfigured()) platforms.push('youtube')
   if (wordpress.isConfigured()) platforms.push('wordpress')
   return platforms
 }
