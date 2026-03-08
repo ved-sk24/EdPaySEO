@@ -1,0 +1,33 @@
+{
+  "name": "edpay-seo-agent",
+  "version": "1.0.0",
+  "description": "AI-powered SEO automation agent for EdPayU — Indian education market",
+  "main": "src/agent.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/agent.js",
+    "analyze": "node src/agent.js --task analyze",
+    "generate": "node src/agent.js --task generate",
+    "post": "node src/agent.js --task post",
+    "audit": "node src/agent.js --task audit",
+    "daily": "node src/agent.js --task daily",
+    "keywords": "node src/analyzers/keywords.js",
+    "setup": "node src/setup.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "googleapis": "^144.0.0",
+    "replicate": "^1.0.1",
+    "node-cron": "^3.0.3",
+    "sharp": "^0.33.0",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.0",
+    "winston": "^3.14.0",
+    "axios": "^1.7.0",
+    "rss-parser": "^3.13.0",
+    "sitemap": "^8.0.0",
+    "xml2js": "^0.6.0"
+  },
+  "author": "EdPayU",
+  "license": "ISC"
+}

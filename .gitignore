@@ -1,0 +1,10 @@
+node_modules/
+.env
+credentials/
+content/blogs/*.md
+content/images/*.png
+content/images/*.jpg
+content/social/*.json
+logs/*.log
+*.log
+.DS_Store
