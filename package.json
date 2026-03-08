@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node src/agent.js",
+    "continuous": "node src/agent.js --task continuous",
     "analyze": "node src/agent.js --task analyze",
     "generate": "node src/agent.js --task generate",
     "post": "node src/agent.js --task post",
