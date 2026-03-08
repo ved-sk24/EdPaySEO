@@ -1,10 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk'
 import fs from 'fs/promises'
 import path from 'path'
 import { config } from '../config/index.js'
 import logger from '../utils/logger.js'
-
-const anthropic = new Anthropic({ apiKey: config.anthropic.apiKey })
+import { generateText, parseJSON } from '../utils/ai.js'
 
 /**
  * Generate an SEO-optimized blog post
@@ -16,12 +14,7 @@ export async function generateBlogPost({ keyword, title, language = 'en', wordCo
     ? 'Write the blog post in Hindi (Devanagari script). Include some English terms where they are commonly used in India (like "software", "app", "ERP", "dashboard").'
     : 'Write in English. Use simple language that Indian school administrators and principals can easily understand.'
 
-  const message = await anthropic.messages.create({
-    model: config.anthropic.model,
-    max_tokens: config.anthropic.maxTokens,
-    messages: [{
-      role: 'user',
-      content: `You are an expert SEO content writer for the Indian education technology market.
+  const prompt = `You are an expert SEO content writer for the Indian education technology market.
 
 Product: ${config.edpayu.brand} — ${config.edpayu.tagline}
 Website: ${config.edpayu.website}
@@ -60,14 +53,11 @@ Return a JSON object with:
   "estimatedReadTime": "X min"
 }
 
-Return ONLY valid JSON.`,
-    }],
-  })
+Return ONLY valid JSON.`
 
   try {
-    const text = message.content[0].text.trim()
-    const json = text.startsWith('{') ? text : text.match(/\{[\s\S]*\}/)?.[0]
-    const post = JSON.parse(json)
+    const text = await generateText(prompt)
+    const post = parseJSON(text)
 
     // Save to file
     const filename = `${new Date().toISOString().split('T')[0]}-${post.slug || 'post'}.json`
@@ -77,7 +67,7 @@ Return ONLY valid JSON.`,
     logger.info(`Blog post generated: "${post.title}"`, { slug: post.slug, file: filepath })
     return { ...post, filepath }
   } catch (err) {
-    logger.error('Failed to parse blog post:', { error: err.message })
+    logger.error('Failed to generate blog post:', { error: err.message })
     return null
   }
 }
@@ -90,7 +80,6 @@ export async function generateBlogBatch(keywords, language = 'en') {
   for (const keyword of keywords) {
     const post = await generateBlogPost({ keyword, language })
     if (post) posts.push(post)
-    // Rate limit
     await new Promise(r => setTimeout(r, 2000))
   }
   logger.info(`Generated ${posts.length}/${keywords.length} blog posts`)
@@ -101,12 +90,7 @@ export async function generateBlogBatch(keywords, language = 'en') {
  * Improve an existing blog post for better SEO
  */
 export async function improveBlogPost({ content, keyword, currentPosition }) {
-  const message = await anthropic.messages.create({
-    model: config.anthropic.model,
-    max_tokens: config.anthropic.maxTokens,
-    messages: [{
-      role: 'user',
-      content: `You are an SEO expert. This blog post currently ranks at position ${currentPosition} on Google India for the keyword "${keyword}".
+  const prompt = `You are an SEO expert. This blog post currently ranks at position ${currentPosition} on Google India for the keyword "${keyword}".
 
 Analyze and improve it to rank in the top 5.
 
@@ -132,14 +116,11 @@ Focus on:
 - Improve readability for Indian audience
 - Add statistics or data points about Indian education
 
-Return ONLY valid JSON.`,
-    }],
-  })
+Return ONLY valid JSON.`
 
   try {
-    const text = message.content[0].text.trim()
-    const json = text.startsWith('{') ? text : text.match(/\{[\s\S]*\}/)?.[0]
-    return JSON.parse(json)
+    const text = await generateText(prompt)
+    return parseJSON(text)
   } catch (err) {
     logger.error('Failed to parse improved post:', { error: err.message })
     return null

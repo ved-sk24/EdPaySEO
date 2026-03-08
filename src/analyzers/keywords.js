@@ -1,10 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk'
 import axios from 'axios'
 import * as cheerio from 'cheerio'
 import { config } from '../config/index.js'
 import logger from '../utils/logger.js'
-
-const anthropic = new Anthropic({ apiKey: config.anthropic.apiKey })
+import { generateText, parseJSON } from '../utils/ai.js'
 
 /**
  * Use Claude to analyze competitors and find keyword gaps
@@ -13,12 +11,7 @@ export async function analyzeCompetitorKeywords() {
   const competitors = config.edpayu.competitors
   const ourKeywords = config.edpayu.primaryKeywords
 
-  const message = await anthropic.messages.create({
-    model: config.anthropic.model,
-    max_tokens: config.anthropic.maxTokens,
-    messages: [{
-      role: 'user',
-      content: `You are an SEO expert specializing in the Indian education technology market.
+  const prompt = `You are an SEO expert specializing in the Indian education technology market.
 
 Our product: ${config.edpayu.brand} — ${config.edpayu.tagline}
 Website: ${config.edpayu.website}
@@ -41,14 +34,11 @@ Focus on keywords with:
 - India-specific terms (CBSE, ICSE, NEP 2020, state boards)
 - Hindi transliteration keywords (how Indians type Hindi in English)
 
-Return ONLY valid JSON, no markdown or explanation.`,
-    }],
-  })
+Return ONLY valid JSON, no markdown or explanation.`
 
   try {
-    const text = message.content[0].text.trim()
-    const json = text.startsWith('{') ? text : text.match(/\{[\s\S]*\}/)?.[0]
-    const result = JSON.parse(json)
+    const text = await generateText(prompt)
+    const result = parseJSON(text)
     logger.info('Competitor keyword analysis complete', {
       gaps: result.gaps?.length,
       longTail: result.longTail?.length,

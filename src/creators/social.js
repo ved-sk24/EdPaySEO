@@ -1,10 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk'
 import fs from 'fs/promises'
 import path from 'path'
 import { config } from '../config/index.js'
 import logger from '../utils/logger.js'
-
-const anthropic = new Anthropic({ apiKey: config.anthropic.apiKey })
+import { generateText, parseJSON } from '../utils/ai.js'
 
 /**
  * Generate social media posts from a blog post or topic
@@ -16,12 +14,7 @@ export async function generateSocialPosts({ topic, blogContent, keyword }) {
     ? `Based on this blog post:\n---\n${blogContent.substring(0, 3000)}\n---`
     : `Topic: "${topic || keyword}"`
 
-  const message = await anthropic.messages.create({
-    model: config.anthropic.model,
-    max_tokens: config.anthropic.maxTokens,
-    messages: [{
-      role: 'user',
-      content: `You are a social media expert for an Indian EdTech brand.
+  const prompt = `You are a social media expert for an Indian EdTech brand.
 
 Brand: ${config.edpayu.brand} — ${config.edpayu.tagline}
 Website: ${config.edpayu.website}
@@ -98,14 +91,11 @@ Make content:
 - Educational but not boring
 - Include a clear CTA in each post
 
-Return ONLY valid JSON.`,
-    }],
-  })
+Return ONLY valid JSON.`
 
   try {
-    const text = message.content[0].text.trim()
-    const json = text.startsWith('{') ? text : text.match(/\{[\s\S]*\}/)?.[0]
-    const posts = JSON.parse(json)
+    const text = await generateText(prompt)
+    const posts = parseJSON(text)
 
     // Save to file
     const filename = `${new Date().toISOString().split('T')[0]}-${(topic || keyword || 'posts').replace(/\s+/g, '-').toLowerCase().substring(0, 40)}.json`
@@ -132,12 +122,7 @@ Return ONLY valid JSON.`,
  * Generate a content calendar for the week
  */
 export async function generateWeeklyCalendar() {
-  const message = await anthropic.messages.create({
-    model: config.anthropic.model,
-    max_tokens: config.anthropic.maxTokens,
-    messages: [{
-      role: 'user',
-      content: `You are a social media strategist for ${config.edpayu.brand}, an Indian school management software.
+  const prompt = `You are a social media strategist for ${config.edpayu.brand}, an Indian school management software.
 
 Content pillars: ${config.edpayu.contentPillars.join(', ')}
 Target audience: ${config.edpayu.targetAudience.join(', ')}
@@ -172,14 +157,11 @@ Guidelines:
 - Sunday: Light content, motivation, weekly roundup
 - Best posting times for India: 9-10 AM, 12-1 PM, 6-8 PM IST
 
-Return ONLY valid JSON.`,
-    }],
-  })
+Return ONLY valid JSON.`
 
   try {
-    const text = message.content[0].text.trim()
-    const json = text.startsWith('[') ? text : text.match(/\[[\s\S]*\]/)?.[0]
-    const calendar = JSON.parse(json)
+    const text = await generateText(prompt)
+    const calendar = parseJSON(text)
     logger.info(`Weekly calendar generated: ${calendar.length} days planned`)
     return calendar
   } catch (err) {

@@ -2,7 +2,16 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 export const config = {
-  // Claude API
+  // AI Provider: 'gemini' (free) or 'anthropic' (paid)
+  aiProvider: process.env.AI_PROVIDER || 'gemini',
+
+  // Gemini API (FREE — 1500 req/day)
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY,
+    model: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
+  },
+
+  // Claude API (paid fallback)
   anthropic: {
     apiKey: process.env.ANTHROPIC_API_KEY,
     model: 'claude-sonnet-4-20250514',
